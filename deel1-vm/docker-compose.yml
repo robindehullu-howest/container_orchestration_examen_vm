@@ -2,13 +2,38 @@ version: '3.9'
 
 services:
   web:
+    build:
+      context: ./pointsApp
+      dockerfile: Dockerfile
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - 5000:5000
     networks:
       - web
+      - database
   db:
     image: ghcr.io/eslih/postgres:16.1-alpine
     environment:
       - POSTGRES_DB=${POSTGRES_DB}
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL","pg_isready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    expose:
+      - "5432"
     networks:
       - database
+
+networks:
+  web:
+  database:
